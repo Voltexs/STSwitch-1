@@ -288,6 +288,7 @@ class WorkerThread(QThread):
                         # Continue with next application even if one fails
 
                 self.log.emit("COM+ Applications setup completed successfully")
+                self.status_update.emit("complus", "✓ COM+ Setup completed", "green")
                 try:
                     # Force close any open COM+ windows
                     os.system('taskkill /f /im mmc.exe /fi "windowtitle eq Component Services"')
@@ -475,6 +476,24 @@ class MainWindow(QMainWindow):
             }
         """)
         layout.addWidget(self.log_window)
+        
+        # Create credits section
+        credits_layout = QHBoxLayout()
+        credits_layout.setSpacing(5)
+
+        credits_label = QLabel("Created by Cassie & Janco")
+        credits_label.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                font-size: 12px;
+                font-style: italic;
+                padding: 5px;
+            }
+        """)
+        credits_layout.addStretch()
+        credits_layout.addWidget(credits_label)
+        credits_layout.addStretch()
+        layout.addLayout(credits_layout)
         
         # Connect button
         self.button.clicked.connect(self.start_process)
