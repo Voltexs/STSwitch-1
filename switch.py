@@ -313,7 +313,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Patch Switcher Pro")
-        self.setMinimumSize(900, 900)
+        self.setMinimumSize(1200, 800)
         
         # Set the window background color
         self.setStyleSheet("""
