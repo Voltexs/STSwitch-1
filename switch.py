@@ -12,17 +12,20 @@ from PyQt6.QtGui import QColor
 class StatusBox(QFrame):
     def __init__(self, title):
         super().__init__()
-        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
+        self.setFrameStyle(QFrame.Shape.NoFrame)
         layout = QVBoxLayout(self)
+        layout.setSpacing(5)
+        layout.setContentsMargins(10, 10, 10, 10)
         
         self.title = QLabel(title)
+        self.title.setStyleSheet("font-weight: bold;")
         self.status = QLabel("Pending...")
-        self.status.setStyleSheet("color: gray;")
+        self.status.setStyleSheet("color: #888888;")
         
         layout.addWidget(self.title)
         layout.addWidget(self.status)
     
-    def set_status(self, status, color="black"):
+    def set_status(self, status, color="white"):
         self.status.setText(status)
         self.status.setStyleSheet(f"color: {color};")
 
@@ -308,26 +311,93 @@ class WorkerThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Patch Switcher")
-        self.setMinimumSize(800, 600)
+        self.setWindowTitle("Patch Switcher Pro")
+        self.setMinimumSize(900, 700)
+        
+        # Set the window background color
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #1e1e1e;
+            }
+            QWidget {
+                background-color: #1e1e1e;
+                color: #ffffff;
+            }
+        """)
         
         # Create central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
         
-        # Create input section
+        # Create title section
+        title_label = QLabel("Patch Switcher Pro")
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #4dabf7;
+                font-size: 24px;
+                font-weight: bold;
+                padding: 10px;
+                border-bottom: 2px solid #4dabf7;
+            }
+        """)
+        layout.addWidget(title_label)
+        
+        # Create input section with modern styling
         input_layout = QHBoxLayout()
-        self.label = QLabel("Enter Patch Number (e.g., 180 or 180.1):")
+        input_layout.setSpacing(15)
+        
+        self.label = QLabel("Enter Patch Number:")
+        self.label.setStyleSheet("color: #ffffff; font-size: 14px;")
+        
         self.input = QLineEdit()
+        self.input.setPlaceholderText("e.g., 180 or 180.1")
+        self.input.setStyleSheet("""
+            QLineEdit {
+                padding: 10px;
+                border: 2px solid #333333;
+                border-radius: 5px;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #4dabf7;
+            }
+        """)
+        
         self.button = QPushButton("Switch Patch")
+        self.button.setStyleSheet("""
+            QPushButton {
+                padding: 10px 20px;
+                background-color: #4dabf7;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3793dd;
+            }
+            QPushButton:pressed {
+                background-color: #2d7ab8;
+            }
+            QPushButton:disabled {
+                background-color: #666666;
+            }
+        """)
+        
         input_layout.addWidget(self.label)
-        input_layout.addWidget(self.input)
+        input_layout.addWidget(self.input, 1)
         input_layout.addWidget(self.button)
         layout.addLayout(input_layout)
         
-        # Create status boxes
+        # Create status boxes with modern design
         status_layout = QHBoxLayout()
+        status_layout.setSpacing(10)
         self.status_boxes = {
             "find": StatusBox("Find Patch"),
             "delete": StatusBox("Delete Existing"),
@@ -335,24 +405,73 @@ class MainWindow(QMainWindow):
             "batch": StatusBox("Run Batch File"),
             "complus": StatusBox("COM+ Setup")
         }
+        
+        # Update StatusBox styling
         for box in self.status_boxes.values():
+            box.setStyleSheet("""
+                QFrame {
+                    background-color: #2d2d2d;
+                    border-radius: 8px;
+                    padding: 10px;
+                }
+                QLabel {
+                    background-color: transparent;
+                    color: #ffffff;
+                    font-size: 13px;
+                }
+            """)
             status_layout.addWidget(box)
         layout.addLayout(status_layout)
         
-        # Create progress bar
+        # Create progress bar with modern styling
         self.progress = QProgressBar()
+        self.progress.setStyleSheet("""
+            QProgressBar {
+                border: none;
+                border-radius: 5px;
+                background-color: #2d2d2d;
+                height: 20px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #4dabf7;
+                border-radius: 5px;
+            }
+        """)
         layout.addWidget(self.progress)
         
-        # Create log window with custom colors
+        # Create log window with improved styling
         self.log_window = QTextEdit()
         self.log_window.setReadOnly(True)
-        # Set a dark background for better color contrast
         self.log_window.setStyleSheet("""
             QTextEdit {
-                background-color: #1e1e1e;
+                background-color: #2d2d2d;
                 color: #ffffff;
-                font-family: Consolas, monospace;
-                font-size: 10pt;
+                border: none;
+                border-radius: 8px;
+                padding: 15px;
+                font-family: 'Consolas', monospace;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #2d2d2d;
+                width: 14px;
+                margin: 15px 0 15px 0;
+                border-radius: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #4dabf7;
+                min-height: 30px;
+                border-radius: 7px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #3793dd;
+            }
+            QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {
+                border: none;
+                background: none;
             }
         """)
         layout.addWidget(self.log_window)
