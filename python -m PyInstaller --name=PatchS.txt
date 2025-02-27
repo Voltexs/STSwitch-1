@@ -1,0 +1,1 @@
+python -m PyInstaller --name="PatchSwitcher v8" --icon=app.ico --noconsole --onefile --uac-admin switch.py

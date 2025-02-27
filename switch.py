@@ -6,7 +6,7 @@ import time
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QPushButton, QLineEdit, QLabel, QProgressBar, QTextEdit, QFrame)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QIcon
 
 class StatusBox(QFrame):
     def __init__(self, title):
@@ -374,6 +374,11 @@ class MainWindow(QMainWindow):
         
         # Connect button
         self.button.clicked.connect(self.start_process)
+        
+        # Add these lines after self.setWindowTitle()
+        app_icon = QIcon("app.ico")
+        self.setWindowIcon(app_icon)
+        QApplication.setWindowIcon(app_icon)
 
     def log_message(self, message, color="white"):
         self.log_window.append(f'<span style="color: {color};">{message}</span>')
