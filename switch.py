@@ -3,7 +3,6 @@ import shutil
 import subprocess
 import sys
 import time
-import win32com.client
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QPushButton, QLineEdit, QLabel, QProgressBar, QTextEdit, QFrame)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -178,127 +177,6 @@ class WorkerThread(QThread):
                     self.log.emit(line.strip())
             
             self.status_update.emit("batch", "✓ Batch file completed", "green")
-
-            # Add COM+ Applications cleanup and creation
-            self.status_update.emit("complus", "Setting up COM+ Applications...", "blue")
-            self.log.emit("Starting COM+ Applications setup...")
-
-            try:
-                catalog = win32com.client.Dispatch("COMAdmin.COMAdminCatalog")
-                applications = catalog.GetCollection("Applications")
-                applications.Populate()
-
-                # List of applications to manage
-                com_app_names = [
-                    "SMT Customers",
-                    "SMT General",
-                    "SMT Printing",
-                    "SMT Procedures",
-                    "SMT Products",
-                    "SMT Reports",
-                    "SMT Sales",
-                    "SMT Settings",
-                    "SMT Suppliers",
-                    "SMT Sync"
-                ]
-
-                # First, delete existing applications
-                for i in range(applications.Count - 1, -1, -1):
-                    app = applications.Item(i)
-                    if app.Value("Name") in com_app_names:
-                        self.log.emit(f"Removing existing COM+ application: {app.Value('Name')}")
-                        applications.Remove(i)
-                        applications.SaveChanges()
-
-                # Wait a moment for COM+ to process deletions
-                time.sleep(2)
-
-                # Calculate progress increment per application
-                progress_per_app = 25 / len(com_app_names)  # Assuming we want this phase to be 25% of total progress
-                current_progress = 50  # Starting from 50% (after previous operations)
-
-                # Add this before the COM+ setup code
-                com_app_dirs = {
-                    "SMT Customers": os.path.join(program_files_path, "ComPlus Applications", "Customers"),
-                    "SMT General": os.path.join(program_files_path, "ComPlus Applications", "General"),
-                    "SMT Printing": os.path.join(program_files_path, "ComPlus Applications", "Printing"),
-                    "SMT Procedures": os.path.join(program_files_path, "ComPlus Applications", "Procedures"),
-                    "SMT Products": os.path.join(program_files_path, "ComPlus Applications", "Products"),
-                    "SMT Reports": os.path.join(program_files_path, "ComPlus Applications", "Reports"),
-                    "SMT Sales": os.path.join(program_files_path, "ComPlus Applications", "Sales"),
-                    "SMT Settings": os.path.join(program_files_path, "ComPlus Applications", "Settings"),
-                    "SMT Suppliers": os.path.join(program_files_path, "ComPlus Applications", "Suppliers"),
-                    "SMT Sync": os.path.join(program_files_path, "ComPlus Applications", "Sync")
-                }
-
-                # Now create new applications and register components
-                for app_name in com_app_names:
-                    try:
-                        self.log.emit(f"Creating COM+ application: {app_name}")
-                        self.status_update.emit("complus", f"Setting up {app_name}...", "blue")
-                        
-                        new_app = applications.Add()
-                        new_app.SetValue("Name", app_name)
-                        new_app.SetValue("ApplicationAccessChecksEnabled", True)
-                        new_app.SetValue("Authentication", 2)
-                        new_app.SetValue("AuthenticationCapability", 2)
-                        applications.SaveChanges()
-
-                        # Wait for application to be fully created
-                        time.sleep(1)
-
-                        if app_name in com_app_dirs:
-                            component_dir = com_app_dirs[app_name]
-                            if os.path.exists(component_dir):
-                                for dll in os.listdir(component_dir):
-                                    if dll.lower().endswith('.dll'):
-                                        dll_path = os.path.join(component_dir, dll)
-                                        try:
-                                            catalog.InstallComponent(app_name, dll_path, "", "")
-                                            self.log.emit(f"Registered component: {dll}")
-                                        except Exception as e:
-                                            self.log.emit(f"Error registering {dll}: {str(e)}")
-                                            # Continue with next DLL even if one fails
-
-                        # Add roles and permissions
-                        roles = applications.GetCollection("Roles", new_app.Key)
-                        roles.Populate()
-                        
-                        role = roles.Add()
-                        role.SetValue("Name", "CreatorOwner")
-                        roles.SaveChanges()
-
-                        users_in_role = roles.GetCollection("UsersInRole", role.Key)
-                        users_in_role.Populate()
-                        
-                        user = users_in_role.Add()
-                        user.SetValue("User", "Everyone")
-                        users_in_role.SaveChanges()
-
-                        # After setting up roles and permissions
-                        new_app.SetValue("RunForever", True)
-                        applications.SaveChanges()
-
-                        # Update progress
-                        current_progress += progress_per_app
-                        self.progress.emit(int(current_progress))
-
-                    except Exception as e:
-                        self.log.emit(f"Error setting up {app_name}: {str(e)}")
-                        # Continue with next application even if one fails
-
-                self.log.emit("COM+ Applications setup completed successfully")
-                self.status_update.emit("complus", "✓ COM+ Setup completed", "green")
-                try:
-                    # Force close any open COM+ windows
-                    os.system('taskkill /f /im mmc.exe /fi "windowtitle eq Component Services"')
-                except:
-                    pass
-                
-            except Exception as e:
-                self.log.emit(f"Error in COM+ setup: {str(e)}")
-                self.error.emit(str(e))
-
             self.progress.emit(100)
             self.finished.emit()
             
@@ -403,8 +281,7 @@ class MainWindow(QMainWindow):
             "find": StatusBox("Find Patch"),
             "delete": StatusBox("Delete Existing"),
             "copy": StatusBox("Copy Files"),
-            "batch": StatusBox("Run Batch File"),
-            "complus": StatusBox("COM+ Setup")
+            "batch": StatusBox("Run Batch File")
         }
         
         # Update StatusBox styling
